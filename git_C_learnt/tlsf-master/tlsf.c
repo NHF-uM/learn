@@ -66,6 +66,11 @@ tlsf_decl int tlsf_ffs(unsigned int word)
 
 #endif
 
+/**
+ * @brief 找到word里面一个无符号整数中最高位设置为1的位置
+ * @param word 
+ * @return 
+ */
 tlsf_decl int tlsf_fls(unsigned int word)
 {
 	const int bit = word ? 32 - __builtin_clz(word) : 0;
@@ -301,13 +306,13 @@ tlsf_static_assert(ALIGN_SIZE == SMALL_BLOCK_SIZE / SL_INDEX_COUNT);
 */
 typedef struct block_header_t
 {
-	/* Points to the previous physical block. */  //prev_phys_block 前一段空闲块（地址连续的，不需要后一段的，因为可以直接算出来）
+	/* Points to the previous physical block. */  // 指向前一个空闲块（地址连续的，不需要后一段的，因为可以直接算出来）
 	struct block_header_t* prev_phys_block;
 
 	/* The size of this block, excluding the block header. */  // 四字节对齐的，低两位不起作用，用来指示当前块或者上一块是否空闲！！！
 	size_t size;
 
-	/* Next and previous free blocks. */  // 空闲状态的不一定连续的结构头
+	/* Next and previous free blocks. */  // 双向链表指针，仅在空闲时有效（不一定地址连续）
 	struct block_header_t* next_free;
 	struct block_header_t* prev_free;
 } block_header_t;
@@ -341,23 +346,24 @@ static const size_t block_size_min =
 static const size_t block_size_max = tlsf_cast(size_t, 1) << FL_INDEX_MAX;
 
 
-/* The TLSF control structure. */
+/* The TLSF control structure. */	// 总控制块，只有一个，位于内存池起始位置
 typedef struct control_t
 {
-	/* Empty lists point at this block to indicate they are free. */
+	/* Empty lists point at this block to indicate they are free. */	// 哨兵节点，只有一个
 	block_header_t block_null;
 
 	/* Bitmaps for free lists. */
 	unsigned int fl_bitmap;
 	unsigned int sl_bitmap[FL_INDEX_COUNT];
 
-	/* Head of free lists. */
+	/* Head of free lists. */ 	// 空闲块链表头数组
 	block_header_t* blocks[FL_INDEX_COUNT][SL_INDEX_COUNT];
+	
 } control_t;
 
 /* A type used for casting when doing pointer arithmetic. */
 typedef ptrdiff_t tlsfptr_t;
-
+ 
 /*
 ** block_header_t member functions.
 */
@@ -389,10 +395,16 @@ static int block_is_free(const block_header_t* block)
 	return tlsf_cast(int, block->size & block_header_free_bit);
 }
 
+
+/**
+ * @brief 设置当前块为空闲（bit0）
+ * @param block 
+ */
 static void block_set_free(block_header_t* block)
 {
 	block->size |= block_header_free_bit;
 }
+
 
 static void block_set_used(block_header_t* block)
 {
@@ -404,11 +416,19 @@ static int block_is_prev_free(const block_header_t* block)
 	return tlsf_cast(int, block->size & block_header_prev_free_bit);
 }
 
+/**
+ * @brief 设置上一块为空闲（bit1）
+ * @param block 
+ */
 static void block_set_prev_free(block_header_t* block)
 {
 	block->size |= block_header_prev_free_bit;
 }
 
+/**
+ * @brief 设置上一块为使用（bit1）
+ * @param block 
+ */
 static void block_set_prev_used(block_header_t* block)
 {
 	block->size &= ~block_header_prev_free_bit;
@@ -471,12 +491,24 @@ static void block_mark_as_used(block_header_t* block)
 	block_set_used(block);
 }
 
+/**
+ * @brief 以align倍数向上对齐
+ * @param x 
+ * @param align 
+ * @return 
+ */
 static size_t align_up(size_t x, size_t align)
 {
 	tlsf_assert(0 == (align & (align - 1)) && "must align to a power of two");
 	return (x + (align - 1)) & ~(align - 1);
 }
 
+/**
+ * @brief 以align倍数向下对齐
+ * @param x 
+ * @param align 
+ * @return 
+ */
 static size_t align_down(size_t x, size_t align)
 {
 	tlsf_assert(0 == (align & (align - 1)) && "must align to a power of two");
@@ -516,6 +548,13 @@ static size_t adjust_request_size(size_t size, size_t align)
 ** the documentation found in the white paper.
 */
 
+
+/**
+ * @brief 检索fl和sl索引
+ * @param size 
+ * @param fli 
+ * @param sli 
+ */
 static void mapping_insert(size_t size, int* fli, int* sli)
 {
 	int fl, sl;
@@ -800,6 +839,11 @@ static void* block_prepare_used(control_t* control, block_header_t* block, size_
 }
 
 /* Clear structure and point all empty lists at the null block. */
+
+/**
+ * @brief 初始化结构体：控制块中的空闲链表全部指向哨兵节点，位图全部清0
+ * @param control 
+ */
 static void control_construct(control_t* control)
 {
 	int i, j;
@@ -948,6 +992,12 @@ int tlsf_check_pool(pool_t pool)
 ** Size of the TLSF structures in a given memory block passed to
 ** tlsf_create, equal to the size of a control_t
 */
+
+/**
+ * @brief 返回控制块control_t的大小
+ * @param  无
+ * @return size_t
+ */
 size_t tlsf_size(void)
 {
 	return sizeof(control_t);
@@ -973,6 +1023,12 @@ size_t tlsf_block_size_max(void)
 ** tlsf_add_pool, equal to the overhead of a free block and the
 ** sentinel block.
 */
+
+/**
+ * @brief 返回控制块的管理开销大小
+ * @param  
+ * @return size_t 这里返回2 * block_header_overhead（哨兵块和内存块的大小，等于size_t）
+ */
 size_t tlsf_pool_overhead(void)
 {
 	return 2 * block_header_overhead;
@@ -988,6 +1044,7 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 	block_header_t* block;
 	block_header_t* next;
 
+	// 计算内存开销，然后把内存大小向下4字节对齐
 	const size_t pool_overhead = tlsf_pool_overhead();
 	const size_t pool_bytes = align_down(bytes - pool_overhead, ALIGN_SIZE);
 
@@ -1004,7 +1061,7 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 		printf("tlsf_add_pool: Memory size must be between 0x%x and 0x%x00 bytes.\n", 
 			(unsigned int)(pool_overhead + block_size_min),
 			(unsigned int)((pool_overhead + block_size_max) / 256));
-#else
+#else 
 		printf("tlsf_add_pool: Memory size must be between %u and %u bytes.\n", 
 			(unsigned int)(pool_overhead + block_size_min),
 			(unsigned int)(pool_overhead + block_size_max));
@@ -1017,10 +1074,12 @@ pool_t tlsf_add_pool(tlsf_t tlsf, void* mem, size_t bytes)
 	** so that the prev_phys_block field falls outside of the pool -
 	** it will never be used.
 	*/
+
+	// 偏移一段地址（把上一块空闲块排除出空闲链表，因为它不存在），然后在内存池的头部创建一个管理块，把剩余内存插入管理块的空闲链表
 	block = offset_to_block(mem, -(tlsfptr_t)block_header_overhead);
 	block_set_size(block, pool_bytes);
-	block_set_free(block);
-	block_set_prev_used(block);
+	block_set_free(block);	
+	block_set_prev_used(block);	
 	block_insert(tlsf_cast(control_t*, tlsf), block);
 
 	/* Split the block to create a zero-size sentinel block. */
@@ -1079,6 +1138,11 @@ int test_ffs_fls()
 }
 #endif
 
+/**
+ * @brief 初始化内存管理器控制块，不分配内存池，需要额外tlsf_add_pool
+ * @param mem 
+ * @return tlsf_t
+ */
 tlsf_t tlsf_create(void* mem)
 {
 #if _DEBUG
