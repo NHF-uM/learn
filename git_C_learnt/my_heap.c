@@ -21,6 +21,7 @@ typedef struct ALLOC_STRUCT
 #define S_NEXT_BLOCK(p)   p->header_block.next
 #define S_SIZE(p)         p->header_block.size
 
+__attribute__((aligned (4))) // 保证内存池四字节对齐：起始地址 % 4 = 0（GCC编译器）
 uint8_t alloc_buff[ALLOC_BUFF_SIZE];
 
 ALLOC_STRUCT *base;     // 第一个头部块

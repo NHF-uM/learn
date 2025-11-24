@@ -35,9 +35,8 @@
 // #include "stm32f4xx.h"
 
 
-// __align(4) // 保证内存池四字节对齐
-
-	char AllocArray[AllocArraySize];
+__attribute__((aligned (4))) // 保证内存池四字节对齐：起始地址 % 4 = 0（GCC编译器）
+char AllocArray[AllocArraySize];
 
 #endif
 
