@@ -9,7 +9,7 @@ export TMP=/c/Users/28445/AppData/Local/Temp
 export TEMP=$TMP
 
 rm -f main.exe
-gcc main.c test.c -o main.exe
+D:/path/mingw64/bin/gcc.exe main.c test.c -o main.exe
 
 echo -e "${COLOR_BOLD_GREEN}.exe file has been builded:${COLOR_RESET}"
 

@@ -1,6 +1,9 @@
  #include <stdint.h>
 #include <stddef.h>
 
+// 使用首次适配算法（First Fit）：
+// 从空闲链表的当前位置开始，顺序查找“第一个”足够大的空闲块进行分配。
+
 typedef struct ALLOC_STRUCT
 {
     struct header_block // 嵌套结构体，便于管理和封装
@@ -18,6 +21,7 @@ typedef struct ALLOC_STRUCT
 #define S_NEXT_BLOCK(p)   p->header_block.next
 #define S_SIZE(p)         p->header_block.size
 
+__attribute__((aligned (4))) // 保证内存池四字节对齐：起始地址 % 4 = 0（GCC编译器）
 uint8_t alloc_buff[ALLOC_BUFF_SIZE];
 
 ALLOC_STRUCT *base;     // 第一个头部块
@@ -110,11 +114,4 @@ void free(void *str)
     }
 
     freep = p;
-}
-
-char arr[100];
-
-int main(void)
-{
-    sizeof(arr) / sizeof(arr[0]);
 }
