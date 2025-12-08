@@ -14,5 +14,8 @@ int main()
     setlocale(LC_ALL, "zh_CN.UTF-8");
 
     printf("hello world\n");
+    uint16_t a;
+    scanf("%d", &a);
+    printf("%hx\n", a);
     return 0;
 }
