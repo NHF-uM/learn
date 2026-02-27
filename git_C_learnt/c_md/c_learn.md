@@ -418,3 +418,25 @@ void func(int *data)
 ⚠️：
  - 括号优先级最高
  - ++ 和 -- 参与运算的元素为一个，属于一元运算符
+
+### 入参参数拷贝
+
+⚠️：这里虽然是指针，但是本质还是值传递
+
+```c
+static inline void put_uint16_inc(uint8_t *buf, uint16_t val)
+{
+    buf = (uint16_t *)buf;
+    *buf = val;
+    buf += sizeof(uint16_t);
+}
+
+/* 上面的函数实际上并没有修改到buf，buf虽然是地址，但也是从实参拷贝为形参，要改为： */
+
+static inline void put_uint16_inc(uint8_t **buf, uint16_t val)
+{
+    uint8_t *p = (uint16_t *)(*buf);
+    *p = val;
+    *buf += sizeof(uint16_t);
+}
+```
