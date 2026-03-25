@@ -16,6 +16,9 @@
     - 补码（前提是有符号的负数）：**所有内存中的数据都是以补码形式存储的，所有运算也是用的补码（加减乘除，&，^，|，~【符号位也反转】）**
       - 示例：`uint -10` 转为 `1111 1111 1111 1111 1111 1111 1111 0110` 存储到开辟的四字节中（这个过程不理会数据类型是什么）
 
+    - 码位溢出：
+      - 正数和正数相加，如果计算结果的符号位为1，说明发生了码位溢出，需要给一位，符号位若为0则舍去溢出位
+      - 负数和负数相加，如果计算结果的符号位为0，说明发生了码位溢出，需要给一位，符号位若为1则舍去溢出位
     - 类型提升：
       - 场景：
         - 表达式中：函数调用（`printf`），赋值（**不是声明:`char a = 128`**），运算，条件判断
@@ -159,7 +162,77 @@
  - 有逻辑的相关常量，使用枚举更合适
 
  - 需要文本替换、条件编译、非整型常量、代码片段复用 → 只能用宏定义，否则**优先使用枚举**
-  
+
+### 宏展开
+
+```c
+#define _STR(R) #R
+#define STR(R)  _STR(R)
+
+// 定义一个宏常量
+#define BAUD_RATE 115200
+// 定义一个普通变量
+int baud = 9600;
+
+// 直接用底层宏：不展开宏，仅字面量字符串化
+printf("底层宏：%s\n", _STR(BAUD_RATE)); // 输出：底层宏：BAUD_RATE
+printf("底层宏：%s\n", _STR(baud));     // 输出：底层宏：baud
+
+// 用上层宏：先展开宏，再字符串化
+printf("上层宏：%s\n", STR(BAUD_RATE));  // 输出：上层宏：115200
+printf("上层宏：%s\n", STR(baud));      // 输出：上层宏：baud（普通变量无宏可展开，和底层宏一致）
+```
+
+### 集大成者（宏拼接和宏的妙用）
+
+```c
+/*
+ * 因为要是有个宏批量生成，不能用do while，要用inline代替不展开的"宏+do"
+ * 用## 连接符，把参数展开成字符串来生成函数名
+ * 直接在h文件里面写函数的定义，inline确保了高效（达到define的效果）
+ * 都是对一个数据的操作！！
+*/
+#define __VALUE_GET_TEMPLATE(_type) \
+static inline _type get_##_type(uint8_t *data) \
+{ \
+    return *(_type *)data; \
+}
+
+#define __VALUE_PUT_TEMPLATE(_type) \
+static inline void put_##_type(uint8_t *data, _type value) \
+{ \
+    *(_type *)data = value; \
+}
+
+// 完成对数据的操作，然后自增地址
+#define __VALUE_GET_INC_TEMPLATE(_type) \
+static inline _type get_##_type##_inc(uint8_t **data) \
+{ \
+    uint8_t *temp = *data; \
+    *data = temp + sizeof(_type); \
+    return get_##_type(temp); \
+}
+
+#define __VALUE_PUT_INC_TEMPLATE(_type) \
+static inline void put_##_type##_inc(uint8_t **data, _type value) \
+{ \
+    uint8_t *temp = *data; \
+    *data = temp + sizeof(_type); \
+    put_##_type(temp, value); \
+}
+
+// 把函数框架当成宏，快速生成
+#define __VALUE_GENERATE_FUNC(_frame) \
+    _frame(uint8_t) \
+    _frame(uint16_t) \
+    _frame(uint32_t)
+
+__VALUE_GENERATE_FUNC(__VALUE_GET_TEMPLATE)
+__VALUE_GENERATE_FUNC(__VALUE_PUT_TEMPLATE)
+__VALUE_GENERATE_FUNC(__VALUE_GET_INC_TEMPLATE)
+__VALUE_GENERATE_FUNC(__VALUE_PUT_INC_TEMPLATE)
+
+```c
 
 ## 结构体
 
@@ -383,9 +456,21 @@ tips：任意能被4整除的数，其二进制的最低两位一定是 0
 
 结构体的最后一个成员是未知大小的数组
 
+优势：
+  - 可以动态调整数组大小，减少内存浪费（不再需要烦恼缓冲区大小，特别是当长度变化大的时候）；否则就要结构体里面嵌套指针，需要多次释放避免内存泄露！
+
 特点：
  - 该结构体至少要有一个成员，才能到柔性数组
- - sizeof的返回值不包括柔性数组
+ - sizeof的返回值不包括柔性数组，需要手动加上柔性数组的大小（如果需要的话）
+ - 柔性数组要和动态内存分配结合使用，不能直接定义实例，如`ble_notify_t notify`
+
+## ARM汇编
+
+### 语法
+ - `MOV R0, #0`：将立即数0加载到寄存器R0中
+ - `LDR R1, =0x20000000`：将地址0x20000000加载到寄存器R1中
+ - `STR R0, [R1, #4]`：将寄存器R0的值存储到寄存器“R1+4字节”指向的内存地址（方括号表示内存地址）中
+ - 
 
 ## 其他小知识
 
@@ -440,3 +525,12 @@ static inline void put_uint16_inc(uint8_t **buf, uint16_t val)
     *buf += sizeof(uint16_t);
 }
 ```
+
+### 头文件引用
+
+采用“编译时路径”，即根据构建文件（makefile/cmake/c_cpp.json）的include_path为**根目录**（不包括它本身）来查找（include_path也是按顺序查找）
+
+### 速记
+
+- 1kb = 1024bytes = 0x400 = 4 * 256（0x100）
+- 4kb = 4096bytes = 0x1000
