@@ -106,3 +106,14 @@
 ![展示怎么 gitignore](gitignore_vscode.png)
 
 不能删除当前分支——需要切换到其他分支
+
+### 合并Merge
+
+在分支fun_1中完成修改，需要合并回main分支：
+
+1. 确保自己在fun_1中，`git merge main`对齐主线，提前解决所有的冲突
+2. 切换到main中，`git merge fun_1`把分支合并回主线
+
+#### 快速合并Fast-forward
+
+Git 发现你的分支完全是主线的 “后代”，直接把主线指针往前挪一步，完成合并
