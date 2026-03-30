@@ -379,19 +379,19 @@ typedef union {
 
 ### const
 
-不是真正的常量，`const u8 size = 100;`  `uint8_t arr[size]`会报错
+- 不是真正的常量，`const u8 size = 100;`  `uint8_t arr[size]`会报错
+- 运行时编译，所以不能创建“指针本身不变，且初始化的时候不知道指向什么的全局变量”
 
 const的修饰对象：
-
 
 - 修饰变量：
   变量不能**直接修改**(所以可以地址修改！)
 
 - 修饰指针
   不修饰数据类型！所以右边离谁近修饰谁
-  `const uint8_t *p = arr;`
-  `uint8_t const *p = arr;`
-  `uint8_t *const p = arr;`
+  `const uint8_t *p = arr;`arr不能改变，p可以指向其他地址
+  `uint8_t const *p = arr;`arr不能改变，p可以指向其他地址
+  `uint8_t *const p = arr;`arr可以改变，p不能指向其他地址
 
 ### volatile
 

@@ -32,7 +32,7 @@
 一个“指针”，指向某个提交（的哈希值）
 
 1. 创建新提交时，同时会让分支指向新提交(管理了一条枝干)
-3. 切换分支等操作后，分支会自动指向最新的提交
+2. 切换分支等操作后，分支会自动指向最新的提交
 
 分支：验证新功能/修复旧代码/每人一个分支独立开发/…………     最终都是要合并到主分支的
 
@@ -64,7 +64,7 @@
 
 1. `git switch <branch-name>`：切换到指定分支（）
 2. `git switch <commit-hash>`：切换到指定提交的状态（分离 HEAD）
-4. `git checkout`和`git switch`区别在前者多了一个撤销修改的功能，导致误操作较多，后者只能够做到纯粹的切换HEAD
+3. `git checkout`和`git switch`区别在前者多了一个撤销修改的功能，导致误操作较多，后者只能够做到纯粹的切换HEAD
 
 切换 HEAD 的两种情况：
 
@@ -131,7 +131,38 @@ Git 发现你的分支完全是主线的 “后代”，直接把主线指针往
 
 #### 交互式基变Rebase -i
 
+##### 前置准备
 
+1. 下载GitLens拓展
+2. `git config --global core.editor "code --wait"`
+    - 把vscode设置为默认的git编辑器
+
+    - `--wait`让 Git 进程处于等待状态，直到你在 VS Code 中编辑完成并关闭文件窗口，Git 才会继续执行后续操作
+
+3. 在Git Graph中点击Rebase之后选择`Launch Interactive Rebase in new Terminal`
+    ![交互式基变](./git_learn.assets/vscode_show_rebase_i.png)
+
+4. 
+
+##### Pick保留
+
+##### Reword重写
+
+只修改“提交（标题）信息”
+
+##### Edit编辑提交
+
+修改“提交内容”
+
+##### Squash（向前）压缩
+
+多个节点压缩为一个（根节点不能压缩）
+
+##### 修复提交
+
+##### 丢弃提交
+
+删除单一/某几个节点
 
 ### 取消追踪
 
@@ -151,3 +182,14 @@ Git 发现你的分支完全是主线的 “后代”，直接把主线指针往
    - 中途放弃，回到操作前状态，`git cherry-pick --abort`
    - 只把提交内容拿过来，不自动提交，`git cherry-pick -n <commit-id>`
    - 保留提交来源，`git cherry-pick -x <commit-id>`
+
+### 远程仓库Remote
+
+.git文件夹中存放相关配置
+
+- 查看当前状态，`git remote -v`
+- 绑定远程仓库（<u>给远程仓库起别名</u>），`git remote add origin https://github.com/……`
+- 修改远程仓库地址（<u>给远程仓库起别名</u>），`git remote set-url origin https://github.com/…………`
+- 清除仓库绑定，`git remote remove origin`
+
+> 远程仓库的别名——在push和fetch的时候，代替URL——`git push origin main`
