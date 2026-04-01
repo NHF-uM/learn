@@ -5,7 +5,7 @@
 1. git 官网
 2. 除了图片的设置外，其他均可保持默认
 
-![git 安装设置](git_install_setting.png)
+![git 安装设置](./git_learn.assets/git_install_setting.png)
 
 ## 分区
 
