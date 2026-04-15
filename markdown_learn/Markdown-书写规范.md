@@ -208,10 +208,10 @@ ___
 [显示出来的可供点击的文字](#61-分隔线horizontal-rule) 
 
 锚点：可以用来简化长标题
-![锚点的使用示例](example_anchor.png)
+![锚点的使用示例](./assets/example_anchor.png)
 
 ### 跳转到非标题（使用锚点）
-![跳转到非标题](jump_to_non_title.png)
+![跳转到非标题](./assets/jump_to_non_title.png)
 
 ## 总结
 

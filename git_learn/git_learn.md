@@ -1,11 +1,18 @@
 # Git
 
-## 安装
+## 安装和配置
 
-1. git 官网
-2. 除了图片的设置外，其他均可保持默认
+> 安装直接去 git 官网
 
-![git 安装设置](./git_learn.assets/git_install_setting.png)
+```bash
+记得用系统级终端运行
+
+git config --global user.name "NHF_uM"
+
+git config --global user.email "2844588775@qq.com"
+```
+
+
 
 ## 分区
 
@@ -46,7 +53,7 @@
    1. 分离 HEAD，如果创建新提交，那这个提交就不属于任何分支，被判定为孤立提交（在 gitGraph 上没有标签指向的提交将被隐藏，一段时间之后会被 git 删除）
    2. 分离 HEAD 之后，需要创建一个新的分支再进行提交（重新用一个分支标签指回去，让其能够稳定存在）
 
->分离节点：不被任何“指针”指向或关联，一段时间后会被git回收机制清除
+>分离节点：不被任何“指针”指向或关联，一段时间后会被 git 回收机制清除
 
 ## 状态
 
@@ -64,22 +71,22 @@
 
 1. `git switch <branch-name>`：切换到指定分支（）
 2. `git switch <commit-hash>`：切换到指定提交的状态（分离 HEAD）
-3. `git checkout`和`git switch`区别在前者多了一个撤销修改的功能，导致误操作较多，后者只能够做到纯粹的切换HEAD
+3. `git checkout` 和 `git switch` 区别在前者多了一个撤销修改的功能，导致误操作较多，后者只能够做到纯粹的切换 HEAD
 
 切换 HEAD 的两种情况：
 
-- “当前工作区和暂存区的 **已提交的代码**”和“切换后的工作区和暂存区”完全一致：直接切换，把未提交的内容（“游离草稿”）也一起带过去
+- “当前工作区和暂存区的 **已提交的代码**”和“切换后的工作区和暂存区”完全一致：直接切换，把未提交的内容（“游离草稿”）也一起带过去（不改变工作区）
 - “当前工作区和暂存区的 **已提交的代码**”和“切换后的工作区和暂存区”不一致：提示需要先处理未提交的代码
   - 满足主观的提交要求：暂存+提交
   - 不满足主观的提交要求：
-    - 暂存+备份（`git stash`）：将未提交的代码保存到一个**临时**区域，切换后再恢复（`git stash pop`）
+    - 暂存+备份（`git stash`）：将未提交的代码保存到一个 **临时** 区域，切换后再恢复（`git stash pop`）
     - 直接放弃
 
 ### 暂存 Stash
 
-存的是所有“未提交的代码”（无论是否add）
+存的是所有“未提交的代码”（无论是否 add）
 
-- `git stash`：将当前的“未提交的代码”保存到一个**临时**区域（本地）
+- `git stash`：将当前的“未提交的代码”保存到一个 **临时** 区域（本地）
 - `git stash save "我存的是：登录功能代码"`：给 stash 添加一个描述信息，方便后续查看
 - `git stash list`：查看所有的 stash 条目
 - `git stash pop`：取出最近一次的 stash 条目，并将其从 stash 列表中删除
@@ -87,70 +94,73 @@
 - `git stash drop`：删除指定的 stash 条目
 - 后跟 stash 条目编号（比如 `git stash pop stash@{2}`）可以指定操作特定的 stash 条目![(gitignore_vscode.png)
 
-### 合并Merge（会产生新的提交）
+### 合并 Merge（会产生新的提交）
 
-在分支fun_1中完成修改，需要合并回main分支：
+- 找到公共节点，一路到最新节点
+- 融合两条分支，在目标分支生成一个新的提交
 
-1. 确保自己在fun_1中，`git merge main`对齐主线，提前解决所有的冲突
-2. 切换到main中，`git merge fun_1`把分支合并回主线
+在分支 fun_1 中完成修改，需要合并回 main 分支：
 
-#### 快速合并Fast-forward
+1. 确保自己在 fun_1 中，`git merge main` 对齐主线，提前解决所有的冲突
+2. 切换到 main 中，`git merge fun_1` 把分支合并回主线
+
+#### 快速合并 Fast-forward
 
 Git 发现你的分支完全是主线的 “后代”，直接把主线指针往前挪一步，完成合并
 
-### 基变Rebase（不会产生新的提交，但会修改提交历史）
+### 基变 Rebase（不会产生新的提交，但会修改提交历史）
 
-使用它而不是merge最大的原因是能保持git的节点简洁
+使用它而不是 merge 最大的原因是能保持 git 的节点简洁
 
 - 找到公共分支，**依次**（有多少个节点发生冲突，就要解决多少次）复制分支链上的各个节点到目标分支（位置不同，复制前后的节点的哈希值也不相同）
 - 原本的节点将不再被本机分支指向，但没有消失，如果没有被远程分支指向的话将变成分离节点（保持历史整洁）
 - 分支链上的子分支不在基变范围内（团队协作里风险很高）
 
-在分支fun_2中完成修改，需要基变回main分支：
+在分支 fun_2 中完成修改，需要基变回 main 分支：
 
-1. 确保自己在fun_2中，`git rebase main`
-   - 发生冲突，解决冲突并且`git add`+`git rebase --continue`
+1. 确保自己在 fun_2 中，`git rebase main`
+   - 发生冲突，解决冲突并且 `git add`+`git rebase --continue`
    - 中途放弃，回到操作前状态，`git cherry-pick --abort`
 
-2. 如果要推送，要用push -f
+2. 如果要推送，要用 push -f
 
->复杂链式结构使用rebase很容易导致代码的丢失，少用
+>复杂链式结构使用 rebase 很容易导致代码的丢失，少用
 >
 >---
 >
->多人协作，每人一个功能分支（没有其他人的干扰），用rebase把整条分支**连根拔起**，挪个位置，简化git图
+>多人协作，每人一个功能分支（没有其他人的干扰），用 rebase 把整条分支 **连根拔起**，挪个位置，简化 git 图
 >
 >---
 >
 >想要在分支链中途加入一个节点
 >
->1. 切换HEAD
+>1. 切换 HEAD
 >2. 创建新分支
->3. rebase剩余节点（连根拔起）到新分支
+>3. rebase 剩余节点（连根拔起）到新分支
 >4. 删除旧分支（如果有），让原节点“分离”
 
-#### 交互式基变Rebase -i
+#### 交互式基变 Rebase -i
 
 ##### 前置准备
 
-1. 下载GitLens拓展
+1. 下载 GitLens 拓展
 2. `git config --global core.editor "code --wait"`
-    - 把vscode设置为默认的git编辑器
+    - 把 vscode 设置为默认的 git 编辑器
 
-    - `--wait`让 Git 进程处于等待状态，直到你在 VS Code 中编辑完成并关闭文件窗口，Git 才会继续执行后续操作
+    - `--wait` 让 Git 进程处于等待状态，直到你在 VS Code 中编辑完成并关闭文件窗口，Git 才会继续执行后续操作
 
-3. 在Git Graph中点击Rebase之后选择`Launch Interactive Rebase in new Terminal`
-    ![交互式基变](./git_learn.assets/vscode_show_rebase_i.png)
+3. 在 Git Graph 中点击 Rebase 之后选择 `Launch Interactive Rebase in new Terminal`
+    ![交互式基变](./assets/vscode_show_rebase_i.png)
 
 4. 
 
-##### Pick保留
+##### Pick 保留
 
-##### Reword重写
+##### Reword 重写
 
 只修改“提交（标题）信息”
 
-##### Edit编辑提交
+##### Edit 编辑提交
 
 修改“提交内容”
 
@@ -164,32 +174,78 @@ Git 发现你的分支完全是主线的 “后代”，直接把主线指针往
 
 删除单一/某几个节点
 
-### 取消追踪
+### Ignore 和 取消追踪
 
-`git rm -rf --cached ./`
+`git rm -f --cached ./…………`
 
-### 摘樱桃Cherry pick
+> .gitignore
+>
+> > mdk/*
+> >
+> > ! mdk/*.uvprojx
 
-- 只需要某单独的n个提交的代码（比如底层接口修改了，要同步），不希望通过merge污染自己的分支
+### 摘樱桃 Cherry pick
+
+- 只需要某单独的 n 个提交的代码（比如底层接口修改了，要同步），不希望通过 merge 污染自己的分支
 - 采取复制的方式，并非完全“摘下”
+- 会形成一个新的节点！
 - 默认保留原作者的名字和提交时间
 
-在自己的分支上，需要cherry pick了
+在自己的分支上，需要 cherry pick 了
 
 1. 切换到自己的分支
-2. 摘樱桃`git cherry-pick \<commit-id\>`
+2. 摘樱桃 `git cherry-pick \<commit-id\>`
    - 如果有冲突，`git add`+`git cherry-pick --continue`
    - 中途放弃，回到操作前状态，`git cherry-pick --abort`
    - 只把提交内容拿过来，不自动提交，`git cherry-pick -n <commit-id>`
    - 保留提交来源，`git cherry-pick -x <commit-id>`
 
-### 远程仓库Remote
+### 远程仓库 Remote
 
-.git文件夹中存放相关配置
+.git 文件夹中存放相关配置
 
 - 查看当前状态，`git remote -v`
 - 绑定远程仓库（<u>给远程仓库起别名</u>），`git remote add origin https://github.com/……`
 - 修改远程仓库地址（<u>给远程仓库起别名</u>），`git remote set-url origin https://github.com/…………`
 - 清除仓库绑定，`git remote remove origin`
 
-> 远程仓库的别名——在push和fetch的时候，代替URL——`git push origin main`
+> 远程仓库的别名——在 push 和 fetch 的时候，代替 URL——`git push origin main`
+
+### 拉取代码
+
+1. 首次拉取，`git clone URL`
+    1. 具体分支，`git clone -b branch_name URL`
+    2. 自定义文件夹名字，`git clone URL new_name`
+2. 拉取+合并到本地，`git pull origin branch_name`
+3. 拉取+放到远程仓库+不合并
+    1. 拉取，`git fetch`
+    2. 手动合并，`git merge`
+
+## Git Bash
+
+### 特性
+
+执行两条命令
+
+- && 前一条执行成功，执行第二条
+- ；不论前一条结果，执行第二条
+
+### 环境变量
+
+默认会继承系统的环境变量，**需要重启一个 bash 才能生效**，但是系统环境变量优先级较低（如果高优先级有输出，低优先级执行不到）![bash 配置文件的区别](./assets/bash_setting_files.png)
+
+>VSCode 集成的 Git Bash 默认启动的是：`bash --login`
+>它只读 .bash_profile 或 .profile，完全不读 .bashrc！
+>
+>所以对于 python：
+>
+>`echo 'export PATH="/c/msys64/ucrt64/bin:$PATH"' >> ~/.bashrc` 不可用
+>
+>`echo 'export PATH="/c/msys64/ucrt64/bin:$PATH"' >> ~/.bash_profile`  + `source ~/.bash_profile` 可用
+
+### 别名
+
+- 类似于宏定义，所有经过终端的 **独立输入**（左右为空格）都被转换
+
+`alias flash='. $HOME/esp/esp-idf/export.sh && ~/esp32c3-up/bt_ota/my_flash.sh'`
+

@@ -5,7 +5,7 @@
 ### 以整型为例，讲透“取”和“放”
 
 - 存储形式（有无符号位看数据类型uint or int）
-  ![整数的存储形式](integer_storage_in_memory.png)
+  ![整数的存储形式](./assets/integer_storage_in_memory.png)
   - 原码
   - 反码（前提是有符号的负数）：符号位不变，其余位按位取反
   - 补码（前提是有符号的负数）：第一位是符号位，0为正数，**所有内存中的整数都是以补码形式存储的，所有运算也是用的补码（加减乘除，&，^，|，~【符号位也反转】）**
@@ -232,7 +232,8 @@ static inline void put_##_type(uint8_t *data, _type value) \
     *(_type *)data = value; \
 }
 
-// 完成对数据的操作，然后自增地址
+/* 完成对数据的操作，然后自增地址 */
+/* 这里必须要用static修饰函数<————.h文件的引用 */
 #define __VALUE_GET_INC_TEMPLATE(_type) \
 static inline _type get_##_type##_inc(uint8_t **data) \
 { \
@@ -417,31 +418,29 @@ const的修饰对象：
 - 特点：
   速度快（电子运动），掉电丢失
 
-##### FLASH
+##### ROM (只读存储器Read-Only Memory)
+
+###### FLASH (闪存Flash Memory)
+
+它结合了 ROM 和 RAM 的优点，既能在断电后保存数据，又能被快速地读取和擦写。
 
 - RO（Read Only）段
   - text段：
-    代码段+只读常量
-
-##### ROM
+    代码段 + const修饰的只读常量
 
 ##### RAM（临时随机存储器Random Access Memory）
-
-- RO代码区
-  - text段
-  - rodata段
   
 - 已初始化区
   - data段：已初始化的全局变量和静态变量
   
 - 未初始化区
-  - bss段：未初始化的全局变量和静态变量
+  - bss段：未初始化的全局变量和static修饰的静态变量，启动时在ram中被自动清零
   
 - 栈
 
 - 堆
 
-编译分区：
+##### 编译分区：
 
 - .text：代码段（RO 段）
 - .rodata：只读数据（RO 段）
@@ -503,6 +502,25 @@ tips：任意能被4整除的数，其二进制的最低两位一定是 0
  - `LDR R1, =0x20000000`：将地址0x20000000加载到寄存器R1中
  - `STR R0, [R1, #4]`：将寄存器R0的值存储到寄存器“R1+4字节”指向的内存地址（方括号表示内存地址）中
  - 
+
+## 编译链工具
+
+交叉编译：在Windows上编译stm程序……
+
+>hosted表示主机——WSL属于linux：
+>
+>- Windows (mingw-w64-x86_64) **hosted** cross toolchains 
+>- Windows (mingw-w64-i686) **hosted** cross toolchains 
+>- x86_64 Linux **hosted** cross toolchains 
+>- aarch64 Linux **hosted** cross toolchains
+>
+>>bare-metal——无linux之类的操作系统
+>>
+>>- AArch32 bare-metal target (arm-none-eabi) 
+>>- AArch32 GNU/Linux target with hard float (arm-none-linux-gnueabihf) 
+>>- AArch64 bare-metal target (aarch64-none-elf) 
+>>- AArch64 GNU/Linux target (aarch64-none-linux-gnu) 
+>>- AArch64 GNU/Linux big-endian target (aarch64_be-none-linux-gnu)
 
 ## 其他小知识
 
@@ -584,10 +602,14 @@ static inline void put_uint16_inc(uint8_t **buf, uint16_t val)
 
   ​    %02d————“01” “02” “11”
 
-占位：
+  占位：
     uint64——unsigned longlong——llu
     x——小写十六进制，多少位取决于变量类型
     X——大写十六进制，多少位取决于变量类型
     c——char
     p——地址
     z——size_t类型
+
+### Keil配置文件
+
+![Keil配置文件](./assets/Keil_uvprojx_uvptx.png)
